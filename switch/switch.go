@@ -1,31 +1,24 @@
 package main
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-)
+import "fmt"
 
+func main(){
+	a := [5]int{1,2,3,4,5}
+	b := [5]int{500,400,300,200,100}
 
-func main () {
-
-	stdin := bufio.NewReader(os.Stdin)
-	for{
-		fmt.Println("입력하세요")
-		var number int 
-		_, err := fmt.Scanln(&number)
-		if err != nil {
-			fmt.Println("숫자를 입력하세요")
-
-			stdin.ReadString('\n')
-			continue
-		}
-
-		fmt.Printf("입력한 숫자는 %d입니다 \n", number)
-		if number%2 == 0 {
-			break
-		} 
+	for i, v := range a {
+		fmt.Printf("a[%d]: %d\n", i, v)
 	}
 
-	fmt.Println("반복문 종료됨")
+	fmt.Println()
+	for i, v := range b {
+		fmt.Printf("b[%d]: %d\n", i, v)
+	}
+
+	b = a
+
+	fmt.Println()
+	for i, v := range b {
+		fmt.Printf("b[%d]: %d\n", i, v)
+	}
 }
