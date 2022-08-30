@@ -1,9 +1,16 @@
 package main
 
+import "fmt"
+
+type Data struct {
+	Name string
+	Age  int
+}
+
+
 func main() {
-	type Product struct {
-		Name        string
-		Price       int
-		ReviewScore float64
-	}
+	p := &Data{}
+	x := new(Data)
+
+	fmt.Println(&p,&x)
 }
