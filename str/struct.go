@@ -2,15 +2,11 @@ package main
 
 import "fmt"
 
-type Data struct {
-	Name string
-	Age  int
-}
-
-
 func main() {
-	p := &Data{}
-	x := new(Data)
+	str := "Hello, 월드"
 
-	fmt.Println(&p,&x)
+	runes := []rune(str)
+
+	fmt.Println(len(str))
+	fmt.Println(len(runes))
 }
