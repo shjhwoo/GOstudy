@@ -18,17 +18,17 @@ import (
 
 func main() {
 	var wg sync.WaitGroup
-	ch := make(chan int) //나는 정수 타입의 메세지를 전달할것이다
+	ch := make(chan int) //나는 정수 타입의 메세지를 전달할것이다. 메세지를 쌓아두는 큐이다. 즉, 우편함과 같은 곳.
 
-	wg.Add(1)
+	wg.Add(1)// 작업의 갯수를 설정한다.
 	go square(&wg, ch) //새로운 고루틴을 만들고 동시에 실행한다.
-	ch <- 9 //채널 인스턴스에 데이터를 할당한다
+	ch <- 9 //채널 인스턴스에 데이터를 할당한다= 우편함에 9라는 메세지를 넣는다.
 	wg.Wait() // 아래 선언되어 있는 함수가 위에서 생성했던 채널의 데이터를 빼서 계산하고 출력할 때까지 기다려 준다는 의미.
 }
 
 func square(wg *sync.WaitGroup, ch chan int) {
-	n := <- ch
+	n := <- ch //우편함에 있던 메세지를 빼온다
 	time.Sleep(time.Second)
 	fmt.Printf("Square: %d\n", n*n)
-	wg.Done()
+	wg.Done() //작업을 완료했으므로 대기 작업 목록을 1개 감소시킨다. 
 }
