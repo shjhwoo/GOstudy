@@ -3,7 +3,39 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
+
+// 11.04 금요일 일정 간격으로 오래 걸리는 일을 동시에 실행하고 싶을 떄.
+
+func square(wg *sync.WaitGroup, ch chan int) {
+	tick := time.Tick(time.Second)
+	terminate := time.After(10 * time.Second)
+
+	for {
+		select {
+		case <-tick:
+			fmt.Println("tick")
+		case <-terminate:
+			fmt.Println("terminate")
+			wg.Done()
+		case n := <-ch:
+			fmt.Println(n * n)
+			time.Sleep(time.Second)
+		}
+	}
+}
+
+func main() {
+	var wg sync.WaitGroup
+	ch := make(chan int)
+	wg.Add(1)
+	go square(&wg, ch)
+	for i := 0; i < 10; i++ {
+		ch <- i * 2
+	}
+	wg.Wait()
+}
 
 // func main() {
 // 	var messages chan string = make(chan string) //채널명 채널타입 = make(메세지 타입), 메세지는 고루틴끼리 주고받는 정보!
@@ -74,23 +106,29 @@ import (
 
 //만약에 조건에 따라 여러 개의 채널에서 데이터를 받아와서, 여러 개의 일을 좀 더 효율적으로, 멀티스레드처럼 하고싶다면
 
-func square(wg *sync.WaitGroup, ch chan int, quit chan bool) {
-	for {
-		select {
-		case n := <- ch:
-			fmt.Printf("Square %d\n", n*n)
-		case <- quit:
-			wg.Done()
-			return
-		}
-	}
-}
+// func square(wg *sync.WaitGroup, ch chan int, quit chan bool) {
+// 	for {
+// 		select {
+// 		case n := <- ch:
+// 			fmt.Printf("Square %d\n", n*n)
+// 		case <- quit:
+// 			wg.Done()
+// 			return
+// 		}
+// 	}
+// }
 
-func main(){
-	var wg sync.WaitGroup
-	ch := make(chan int)
-	quit := make(chan bool)
+// func main(){
+// 	var wg sync.WaitGroup
+// 	ch := make(chan int)
+// 	quit := make(chan bool)
 
-	wg.Add(1)
-	go square(&wg,ch,quit)
-}
+// 	wg.Add(1)
+// 	go square(&wg,ch,quit)
+
+// 	for i := 0; i < 10; i ++ {
+// 		ch <- i * 2
+// 	}
+// 	quit <- true
+// 	wg.Wait()
+// }
