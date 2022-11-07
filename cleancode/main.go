@@ -4,7 +4,7 @@ func main() {
 
 }
 
-//단일 책임 원칙을 지켜서 설계해라. 코드 재사용성을 높여준다
+//단일 책임 원칙을 지켜서  설계해라. 코드 재사용성을 높여준다
 
 type Report interface {
 	Report() string
