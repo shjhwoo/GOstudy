@@ -32,7 +32,7 @@ func Sender(p Poster) string {
 //다음의 경우는 리스코프 치환 원칙을 위배한 경우이다.
 
 func BadSender(p Poster) string {
-	if _, ok := p.(*AnaloguePost); ok {
+	if _, ok := p.(*AnaloguePost); ok { //이 타입에 대해서만 예외를 두었기 때문이다.
 		panic("Can't handle :(")
 	}
 	return "send!"
