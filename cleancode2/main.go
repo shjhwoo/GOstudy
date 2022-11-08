@@ -35,5 +35,5 @@ func BadSender(p Poster) string {
 	if _, ok := p.(*AnaloguePost); ok { //이 타입에 대해서만 예외를 두었기 때문이다.
 		panic("Can't handle :(")
 	}
-	return "send!"
+	return p.SendReport()
 }
