@@ -10,13 +10,41 @@ import (
 
 // 기본 연결
 func main() {
-	//연결 객체가 아닌 DB를 대표하는 객체를 생성.
+	//연결 객체가 아닌 DB를 대표하는 객체를 생성한다
+
+	username := "root"
+	password := "1234"
+	host := "127.0.0.1"
+	port := "3307"
+	dataSourceName := fmt.Sprintf("%s:%s@tcp(%s:%s)/", username, password, host, port) //"root:1234@tcp(127.0.0.1:3307)/"
+
 	//내부적으로 커넥션 풀을 유지한다
-	db, err := sqlx.Open("mysql", "root:1234@tcp(127.0.0.1:3306)/hackerank")
+	db, err := sqlx.Open("mysql", dataSourceName)
 	if err != nil {
 		fmt.Println(err, "...1")
 		return
 	}
+
+	//커넥션 풀!
+	//쿼리문 준비, 쿼리 실행은 연결을 필요로 함
+	//db 객체는 이런 커넥션 풀을 관리함
+	/*
+		기본적으로는 풀에 있는 커넥션 갯수는 무한정이다. 풀에 커넥션이 다 차면 새로운 커넥션을 만든다는 소리다.
+		이를 제한하기 위해 다음의 메서드를 사용한다
+	*/
+	db.SetMaxIdleConns(0)   //놀고 있는 커넥션이 없어야 해
+	db.SetMaxOpenConns(256) //맺을 수 있는 커넥션의 최대 개수
+
+	/*
+		커넥션 사용 완료 후에는 항상 이를 반납하여야 한다.
+		Row 하나하나씩 모두 Scan()한다
+		Next()함수를 통해서 모든 Row를 본다
+		Close() 호출
+		트랜잭션의 경우 Commit(), Rollback() 연산을 통해 반납한다
+		무시할 경우, 커넥션은 가비지 컬렉션에 들어가기 전까지 유휴 상태가 된다.
+		그래서 자꾸 새로 만들게 되는 불상사가 생긴다
+		Rows.Close()를 적절히 사용해서 이를 방지하자
+	*/
 
 	//연결 수립
 	err = db.Ping()
@@ -25,41 +53,69 @@ func main() {
 		return
 	}
 
-	fmt.Println("connection established")
+	fmt.Println("con1: connection established")
 
 	//db 생성 동시에 연결도 할 수 있다
-	db, err = sqlx.Connect("mysql", "root:1234@tcp(127.0.0.1:3306)/hackerank")
+	db2, err = sqlx.Connect("mysql", dataSourceName)
 	if err != nil {
 		fmt.Println(err, "...2")
 		return
 	}
+	fmt.Println("con2: connection established")
 
 	//연결 실패시 패닉
-	db = sqlx.MustConnect("mysql", "root:1234@tcp(127.0.0.1:3306)/hackerank")
-	fmt.Println("connection still OK")
+	db3 := sqlx.MustConnect("mysql", dataSourceName)
+	fmt.Println("con3: connection still OK")
 
-	//커넥션 풀!
+	getDBListQuery := `Show databases`
+	res0, err := db.Exec(getDBListQuery)
+	if err != nil {
+		fmt.Println(err, "...2*")
+		return
+	}
+
+	fmt.Println(res0, "b")
+
+	//db 생성 및 선택
+	createDBQuery := `Create database if not exists sqlx`
+	res1, err := db.Exec(createDBQuery)
+	if err != nil {
+		fmt.Println(err, "...3")
+		return
+	}
+
+	fmt.Println(res1, "*")
+
+	selectDBQuery := `Use sqlx`
+	res2, err := db.Exec(selectDBQuery)
+	if err != nil {
+		fmt.Println(err, "...4")
+		return
+	}
+
+	fmt.Println(res2, "**")
 
 	//쿼리 작성하기
-	// schema := `Create Table place (
-	// 	country text,
-	// 	city text NULL,
-	// 	telcode integer
-	// )`
+	type PlaceTable struct {
+		Country  string `db:"country"`
+		City     string `db:"city"`
+		Telcode  int    `db:"telcode"`
+		Database string `db:"-"`
+	}
+
+	sql1 := fmt.Sprintf(`Create Table if not exists %s (
+		country text,
+		city text NULL,
+		telcode integer
+	)`, "sqlx.place")
 
 	//커넥션 풀에서 커넥션 받아와서 지정된 쿼리를 실행함
 	//result가 나오기 전에 쿼리 실행 완료 후 커넥션이 반납된다.
-	// result, err := db.Exec(schema)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// id, err := result.LastInsertId()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Println(id)
+	_, err = db.Exec(sql1)
+	if err != nil {
+		fmt.Println(err, "...5")
+		return
+	}
 
 	cityState := `INSERT INTO place (country, telcode) VALUES (?, ?)`
 	countryCity := `INSERT INTO place (country, city, telcode) VALUES (?, ?, ?)`
@@ -92,11 +148,11 @@ func main() {
 	//https://stackoverflow.com/questions/610056/is-it-possible-to-refer-to-column-names-via-bind-variables-in-oracle
 	//실헁계획 수립이 불가하기 떄문에 써서는 안된다. 직접 하드코딩해주는 것이 필수
 	//또한 이렇게 할 경우 SQL 인젝션 공격에도 취약해진다
-	// doesn't work
-	db.Query("SELECT * FROM ?", "mytable")
+	// // doesn't work
+	// db.Query("SELECT * FROM ?", "mytable")
 
-	// also doesn't work
-	db.Query("SELECT ?, ? FROM people", "name", "location")
+	// // also doesn't work
+	// db.Query("SELECT ?, ? FROM people", "name", "location")
 
 	//쿼리: 이 메서드로도 쿼리 실행이 가능하다
 	// fetch all places from the db
@@ -116,7 +172,6 @@ func main() {
 		var city sql.NullString
 		var telcode int
 		err = rows.Scan(&country, &city, &telcode) //reflect 메서드를 써서 조회한 결과값을 go의 타입으로 변경함
-		fmt.Println(err)
 		fmt.Println(country, city, telcode)
 		//필요 이상으로 rows를 읽어온 경우 반드시 커넥션을 반납해줘야 하기 때문에,
 		//꼭 필요한 만큼만 읽어오는 것이 중요
@@ -128,7 +183,8 @@ func main() {
 	type Place struct {
 		Country       string
 		City          sql.NullString
-		TelephoneCode int `db:"telcode"` //매칭되는 칼럼명을 명시해줘야 한다
+		TelephoneCode int    `db:"telcode"` //매칭되는 칼럼명을 명시해줘야 한다
+		Database      string `db:"-"`
 	}
 
 	//이렇게 읽어오는 방법도 있다.

@@ -1,0 +1,10 @@
+FROM mysql
+
+ENV MYSQL_ROOT_PASSWORD=1234
+ENV MYSQL_DATABASE=mydb
+
+EXPOSE 3306
+
+#docker build -t my-mysql-image .
+
+#docker run -d -p 3307:3306 --name my-mysql-container my-mysql-image
