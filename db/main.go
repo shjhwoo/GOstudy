@@ -199,11 +199,11 @@ func main() {
 	}
 
 	time.Sleep(10 * time.Second) //유휴 상태
-	fmt.Println(db, "객체")
+	fmt.Println(db, "db객체")
 
-	_, err41 := db.Query("SELECT * FROM mydb.place")
+	_, err5 := db.Query("SELECT * FROM mydb.place")
 	if err4 != nil {
-		fmt.Println(err41, "ㅋㅋㅋ")
+		fmt.Println(err5, "")
 		return
 	}
 
