@@ -9,7 +9,7 @@ func main() {
 	//시간 표기법에 대한 예시를 제공함
 	fmt.Println(time.Kitchen)
 
-	//기본 생성 방법
+	//기본 생성 방법 3가지
 	t1 := time.Now()
 	fmt.Println(t1)
 
@@ -58,10 +58,43 @@ func main() {
 	//월 숫자 표기: JS에선 1월을 0부터 매기지만 GO에서는 1월은 1부터 시작함
 	fmt.Println(time.January == time.Month(1))
 
-	//타임존 변경하기
-https: //jeonghwan-kim.github.io/dev/2019/01/14/go-time.html#:~:text=00%20%2B0000%20UTC-,%ED%83%80%EC%9E%84%EC%A1%B4,-%EA%B0%9C%EB%B0%9C%ED%95%A0%20%EB%95%8C%20utc
+	/*
+		UTC 시간 문자열 => KST 기준으로 변경하기
+	*/
+	utcTime := "2019-01-12 00:00:00.000"
+	layout := "2006-01-02 15:04:05.000"
+	utc, _ := time.Parse(layout, utcTime)
 
-	//시작시각, 종료시각을 알고 싶을 떄
+	loc, _ := time.LoadLocation("Asia/Seoul") //위치정보 로드
+	kst := utc.In(loc)                        //실제 변환
+
+	fmt.Println(utc)
+	fmt.Println(kst)
+
+	//더 간단히
+	kstTime, _ := time.ParseInLocation(layout, utcTime, loc)
+	fmt.Println(kstTime)
+
+	fmt.Println(kst.UTC()) //간단히 UTC로 변경하기
+
+	//시간 연산: Add
+	exampleTime := time.Date(2019, 1, 12, 0, 0, 0, 0, time.UTC)
+	afterTenSec := exampleTime.Add(time.Second * 10)
+	afterTenMin := exampleTime.Add(time.Minute * 10)
+	afterTenHour := exampleTime.Add(time.Hour * 10)
+
+	fmt.Println(afterTenSec)  // 2019-01-12 00:00:10 +0000 UTC
+	fmt.Println(afterTenMin)  // 2019-01-12 00:10:00 +0000 UTC
+	fmt.Println(afterTenHour) // 2019-01-12 10:00:00 +0000 UTC
+
+	//시간 연산: Sub
+	sub1 := afterTenMin.Sub(exampleTime)
+	fmt.Println(sub1)
+
+	//시간 연산: 비교하기
+	fmt.Println(exampleTime.Before(afterTenMin))
+	fmt.Println(exampleTime.After(afterTenMin))
+	fmt.Println(exampleTime.Equal(afterTenMin))
 
 	//현재 작업을 잠시 중단 후, 일정 시각 이후에 특정 작업을 시작하고 싶을 때
 	time.Sleep(1 * time.Second)
@@ -87,14 +120,12 @@ https: //jeonghwan-kim.github.io/dev/2019/01/14/go-time.html#:~:text=00%20%2B000
 	for {
 		select {
 		case next := <-c:
-			fmt.Printf("%v %s\n", next, statusUpdate())
+			fmt.Println(next)
 		case <-done:
 			// exit the loop
-			fmt.Println("Stopping ticker...")
+			fmt.Println(fmt.Sprintf("cnt:%d,", cnt), "Stopping ticker...")
 			return
 		}
 		cnt++
 	}
 }
-
-func statusUpdate() string { return "" }
