@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -94,7 +93,7 @@ func main() {
 		}
 
 		// Read the request body*************************이 부분에 주목해주세요
-		body, err := ioutil.ReadAll(r.Body) // Read 메서드 제공하는 io.readCloser 타입. io.Reader의 구현체
+		body, err := io.ReadAll(r.Body) // Read 메서드 제공하는 io.readCloser 타입. io.Reader의 구현체
 		if err != nil {
 			http.Error(w, "Error reading request body", http.StatusBadRequest)
 			return
