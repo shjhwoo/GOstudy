@@ -10,6 +10,12 @@ gin 웹 프레임워크에 적용할 수 있는 기본 검증모듈이다.
 
 package main
 
+import (
+	"fmt"
+
+	"github.com/go-playground/validator/v10"
+)
+
 func main() {
 
 	//검증함수는 인풋이 유효하지 않을 때 InvalidValidationError 리턴.
@@ -29,11 +35,54 @@ func main() {
 	//쓸 수 있는 기본 검증 태그들.
 
 	type Test1 struct {
-		Age      int    `validate:"-"`          //무시
-		Name     string `validate:"jack|joe"`   //두 값 중 하나와 동일해야 함
-		Subjects Test0  `validate:"structonly"` //구조체가 중첩되어 있을 떄 이 구조체 자체가 할당이 되었는지까지만 확인한다. 이 구조체 내부의 필드까지는 검증안한다
-		NickName string `validate:"omitempty"`  //값이 기본값일 경우 검증하지 않음
-		Cell     string `validate:"required"`   //기본값이 아니어야 한다
-		//...
+		Age int `validate:"-"` //무시
+		//Name      string     `validate:"jack|joe"`                      //두 값 중 하나와 동일해야 함
+		Subjects  Test0      `validate:"structonly"`                    //구조체가 중첩되어 있을 떄 이 구조체 자체가 할당이 되었는지까지만 확인한다. 이 구조체 내부의 필드까지는 검증안한다
+		NickName  string     `validate:"omitempty"`                     //값이 기본값일 경우 검증하지 않음
+		Cell      string     `validate:"required"`                      //기본값이 아니어야 한다
+		Addresses [][]string `validate:"gt=0,dive,len=1,dive,required"` //배열, 슬라이스, 맴의 각 요소에 대해서도 유효성 검사흫 진행하는 dive 옵션
+
+	}
+
+	val := validator.New()
+
+	t1 := Test1{}
+
+	error := val.Struct(t1)
+	if error != nil {
+		fmt.Println(error)
 	}
 }
+
+//기본적으로 http 엔드포인트 만들고 컨텍스트를 받아서 유효성 검사 함수를 걸어둘 수 있다.
+/*
+// CreateNewProject func for create a new project.
+func CreateNewProject(c *fiber.Ctx) error {
+
+    // ...
+
+    // Create a new validator, using helper function.
+    validate := utilities.NewValidator()
+
+    // Validate all incomming fields for rules in Project struct.
+    if err := validate.Struct(project); err != nil {
+        // Returning error in JSON format with status code 400 (Bad Request).
+        return utilities.CheckForValidationError(
+            c, err, fiber.StatusBadRequest, "project",
+        )
+    }
+
+    // ...
+}
+
+func CheckForValidationError(ctx *fiber.Ctx, errFunc error, statusCode int, object string) error {
+    if errFunc != nil {
+        return ctx.JSON(&fiber.Map{
+            "status": statusCode,
+            "msg":    fmt.Sprintf("validation errors for the %s fields", object),
+            "fields": ValidatorErrors(errFunc),
+        })
+    }
+    return nil
+}
+*/
